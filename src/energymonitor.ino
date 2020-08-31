@@ -5,7 +5,7 @@
  * Date: 20 July 2020
  */
 
-#define SOFTWARERELEASENUMBER "1.01"                                                        // Keep track of release numbers
+#define SOFTWARERELEASENUMBER "1.02"                                                        // Keep track of release numbers
 
 // Prototypes and System Mode calls
 
@@ -54,6 +54,7 @@ const char* releaseNumber = SOFTWARERELEASENUMBER;                              
 byte controlRegister;                                                                       // Stores the control register values
 bool verboseMode=0;     
 
+
 // setup() runs once, when the device is first turned on.
 void setup() {
   Serial.begin(9600);
@@ -76,7 +77,7 @@ void setup() {
     snprintf(StartupMessage, sizeof(StartupMessage), "Failed to connect");
   }
 
-  emon1.current(A2, 85);                                                                 // Current: input pin, calibration.
+  emon1.current(A1, 90.9);                                                                 // Current: input pin, calibration.
   takeMeasurements();
   
   if(verboseMode) Particle.publish("Startup",StartupMessage,PRIVATE);                                 // Let Particle know how the startup process went
@@ -162,8 +163,8 @@ void loop() {
 
 void sendEvent()
 {
-  char data[64];
-  snprintf(data, sizeof(data), "{\"current\":%3.1f, \"raw_current\":%f}",current_irms,raw_irms);
+  char data[32];
+  snprintf(data, sizeof(data), "{\"current\":%3.1f}",current_irms);
   Particle.publish("current-webhook", data, PRIVATE);
   currentMinutePeriod = Time.minute();                                                        // Change the time period
   dataInFlight = true;                                                                      // set the data inflight flag
@@ -199,16 +200,10 @@ void UbidotsHandler(const char *event, const char *data)                        
 
 bool takeMeasurements(){
   current_irms = emon1.calcIrms(1480);                                               // Calculate Irms only
-  raw_irms = analogRead(A2);
-  // waitUntil(meterParticlePublish);
-  // Particle.publish("Irms",String(current_irms),PRIVATE);
-  // Particle.publish("Sensor",String((current_irms - previous_irms)),PRIVATE);
-  // Particle.publish("lastIrms",String(abs(previous_irms)),PRIVATE);
   if (abs(current_irms - previous_irms) > 0.5){
-    raw_irms = analogRead(A2);
-    Particle.publish("RAW",String(raw_irms),PRIVATE);
     return 1;
   } 
+  else return 0;
 }
 
 
